@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.by.tsgl.mapper.BookMapper">
+
+
+<!--    基本的图书增删改查-->
+    <resultMap id="book" type="com.by.tsgl.bean.Book">
+        <id property="book_id" column="b_id"></id>
+        <result property="nameOfBook" column="b_name"></result>
+        <result property="author" column="b_author"></result>
+        <result property="press" column="b_press"></result>
+        <result property="isbn" column="b_isbn"></result>
+        <result property="language" column="language"></result>
+        <result property="abstractMsg" column="abstract"></result>
+        <result property="keyword" column="keyword"></result>
+        <result property="price" column="b_price"></result>
+        <result property="call_number" column="call_number"></result>
+        <result property="position" column="b_position"></result>
+        <result property="state" column="b_state"></result>
+        <result property="situation" column="b_situation"></result>
+        <result property="library_id" column="library_id"></result>
+        <result property="image" column="b_image"></result>
+        <result property="library_name" column="library_name"></result>
+    </resultMap>
+    <insert id="addBook" parameterType="com.by.tsgl.bean.Book" useGeneratedKeys="true" keyProperty="book_id">
+        INSERT INTO book
+        (b_name,b_author,b_press,b_isbn,`language`,abstract,keyword,b_price,call_number,b_position,b_state,b_situation,library_id,b_image) VALUES
+        (#{nameOfBook},#{author},#{press},#{isbn},#{language},#{abstractMsg},#{keyword},#{price},#{call_number},#{position},
+         #{state},#{situation},#{library_id},#{image})
+    </insert>
+    <select id="searchBooks" resultMap="book">
+        SELECT * FROM `book` NATURAL JOIN library
+        <choose>
+            <when test="mode==0"></when>
+            <when test="mode==1">
+                where b_name like concat(concat('%',#{param}),'%')
+            </when>
+            <when test="mode==2">
+                where b_author like  concat(concat('%',#{param}),'%')
+            </when>
+            <when test="mode==3">
+                where b_press like  concat(concat('%',#{param}),'%')
+            </when>
+            <when test="mode==4">
+                where b_isbn =#{param}
+            </when>
+            <when test="mode==5">
+                where keyword like  concat(concat('%',#{param}),'%')
+            </when>
+            <when test="mode==6">
+                where call_number like  concat(concat('%',#{param}),'%')
+            </when>
+            <otherwise>
+                where b_id=null
+            </otherwise>
+        </choose>
+    </select>
+    <select id="searchBooksByIds" resultMap="book">
+        select * from book where
+        <foreach collection="list" item="item" separator="or" >
+            b_id=#{item}
+        </foreach>
+    </select>
+
+    <select id="getBookById" resultMap="book">
+        select * from book where b_id=#{book_id};
+    </select>
+
+    <delete id="deleteBook" parameterType="String">
+        delete FROM book
+        where b_id=#{book_id}
+    </delete>
+    <update id="modifyBook" parameterType="com.by.tsgl.bean.Book">
+        update book
+        <trim prefix="set" suffixOverrides=",">
+            <if test="nameOfBook!=null">b_name=#{nameOfBook},</if>
+            <if test="author!=null">b_author=#{author},</if>
+            <if test="press!=null">b_press=#{press},</if>
+            <if test="isbn!=null">b_isbn=#{isbn},</if>
+            <if test="language!=null">`language`=#{language},</if>
+            <if test="abstractMsg!=null">abstract=#{abstractMsg},</if>
+            <if test="keyword!=null">keyword=#{keyword},</if>
+            <if test="price!=null">b_price=#{price},</if>
+            <if test="call_number!=null">call_number=#{call_number},</if>
+            <if test="position!=null">b_position=#{position},</if>
+            <if test="state!=null">b_state=#{state},</if>
+            <if test="situation!=null">b_situation=#{situation},</if>
+            <if test="library_id!=null">library_id=#{library_id},</if>
+            <if test="image!=null">b_image=#{image}</if>
+        </trim>
+        where b_id=#{book_id}
+    </update>
+
+<!--    借书信息-->
+    <select id="getBorrowTime" resultType="java.lang.Integer">
+        SELECT borrow_day
+        FROM  reader natural join reader_grade
+        where reader_id=#{reader_id};
+    </select>
+    <select id="judgeBookById" resultMap="book">
+        select * from book where b_id=#{book_id} and b_state='在馆'
+                             and b_situation !='严重受损';
+    </select>
+    <insert id="insertBorrow" parameterType="com.by.tsgl.bean.Borrow" useGeneratedKeys="true" keyProperty="borrow_id">
+        INSERT INTO borrow
+            (borrow_time,borrow_state,should_return,renew_num,return_time,book_id,reader_id)
+        VALUES ( #{borrow_time}, #{borrow_state},
+        #{should_return},#{renew_num},#{return_time},#{book_id},#{reader_id});
+    </insert>
+    <update id="updateBook" parameterType="String">
+        UPDATE book
+        set b_state="借出"
+        WHERE b_id in (
+            SELECT *FROM
+                (SELECT b_id
+                 FROM (SELECT *FROM book
+                       WHERE b_id =#{book_id}) as q
+                 WHERE b_state ="在馆" and b_situation!="严重受损")as tp)
+
+    </update>
+    <update id="updateReader" parameterType="String">
+        update reader
+        set borrowing_num=borrowing_num+1
+        where reader_id in
+        (SELECT * FROM
+        (SELECT reader_id FROM reader join reader_grade
+        WHERE borrowing_num &lt; borrow_booknum)as tp)
+    </update>
+
+<!--    更新借阅记录——续借-->
+
+    <select id="getReaderBorrowRecord" resultType="com.by.tsgl.bean.Borrow">
+        select * from borrow  join reader join reader_grade
+        where reader.reader_id=#{reader_id} and borrow.borrow_state='借出' and reader.grade_id=reader_grade.grade_id
+          and borrow.book_id=#{book_id} and reader_grade.renew_num > borrow.renew_num;
+    </select>
+    <update id="updateBorrow" parameterType="com.by.tsgl.bean.Borrow">
+        update borrow
+        <trim prefix="set" suffixOverrides=",">
+            <if test="borrow_state!=null">borrow_state=#{borrow_state},</if>
+            <if test="borrow_time!=null">borrow_time=#{borrow_time},</if>
+            <if test="should_return!=null">should_return=#{should_return},</if>
+            <if test="renew_num!=null">renew_num=#{renew_num},</if>
+            <if test="return_time!=null">return_time=#{return_time},</if>
+            <if test="book_id!=null">book_id=#{book_id},</if>
+            <if test="reader_id!=null">reader_id=#{reader_id},</if>
+        </trim>
+        where borrow_id=#{borrow_id};
+    </update>
+
+<!--    归还图书-->
+
+<!--将借阅记录中的状态更新未已归还-->
+    <update id="updateBorrowReturn" parameterType="java.lang.String">
+        update borrow
+        SET borrow_state="已归还" , return_time=#{returnDate}
+        where book_id=#{book_id} and reader_id=#{reader_id} and borrow_state="借出";
+    </update>
+<!--将图书状态的借出更新未在馆-->
+    <update id="updateBookReturn" parameterType="java.lang.String">
+        UPDATE book
+        set b_state='在馆'
+        WHERE b_id=#{book_id};
+    </update>
+<!--判断图书是否可归还-->
+    <select id="canBookReturned" resultType="java.lang.Boolean">
+    <!--TODO 这里的borrow_state理解错了！！！-->
+        select count(*) from borrow left outer join book on book.b_id = borrow.book_id
+            where b_id=#{book_id}  and reader_id=#{reader_id} and b_state='借出' and borrow_state='借出';
+    </select>
+
+<!--    预定图书-->
+<!--更新图书预定状态-->
+    <update id="updateReserve">
+        update book
+        set b_state=#{state}
+        WHERE b_id=#{book_id} and b_state=#{preState};
+    </update>
+    <select id="judgeBookReserve" resultMap="book">
+        select * from borrow join book
+        WHERE borrow.book_id=b_id and book_id=#{book_id}  and (borrow_state="借出" or borrow_state ='预定')
+    </select>
+
+    <select id="getReaderRights" resultType="com.by.tsgl.bean.Reader">
+        SELECT * FROM reader join reader_grade
+        where reader.grade_id=reader_grade.grade_id and reader_id=#{reader_id};
+    </select>
+
+    <select id="getReserveRecord" resultType="com.by.tsgl.bean.Borrow">
+        SELECT * FROM borrow
+        WHERE reader_id=#{reader_id} AND book_id IN
+          (SELECT b_id
+           FROM book
+           WHERE b_state='预定' ) AND borrow_state='预定';
+
+    </select>
+
+
+</mapper>

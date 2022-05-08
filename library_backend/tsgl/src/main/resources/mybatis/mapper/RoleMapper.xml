@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.by.tsgl.mapper.RoleMapper">
+    <resultMap id="admin" type="com.by.tsgl.bean.Admin">
+        <id property="admin_id" column="admin_id"></id>
+        <result property="account" column="admin_account"></result>
+        <result property="password" column="admin_pwd"></result>
+        <result property="username" column="admin_name"></result>
+    </resultMap>
+    <resultMap id="user" type="com.by.tsgl.bean.User">
+        <id property="user_id" column="user_id"></id>
+        <result property="account" column="user_account"></result>
+        <result property="password" column="user_pwd"></result>
+        <result property="username" column="user_name"></result>
+    </resultMap>
+
+    <insert id="promoteToAdmin">
+        insert into admin(user_id)
+        select user_id from user where user_account=#{account};
+    </insert>
+
+    <delete id="deleteAdmin">
+        delete from admin
+        where user_id = #{user_id};
+    </delete>
+
+<!--    通过id获取管理员信息-->
+    <select id="getAdminById" resultMap="admin">
+        select * from `admin` where admin_id=#{admin_id};
+    </select>
+<!--    通过id获取用户信息-->
+    <select id="getUserById" resultMap="user">
+        select * from `user` where user_id=#{user_id};
+    </select>
+
+<!--    更新读者信息-->
+    <update id="updateReader" parameterType="com.by.tsgl.bean.Reader">
+        update reader
+        <trim prefix="set" suffixOverrides=",">
+            <if test="deposit_num!=null">deposit_num=#{deposit_num},</if>
+            <if test="borrowing_num!=null">borrowing_num=#{borrowing_num},</if>
+            <if test="reader_state!=null">reader_state=#{reader_state},</if>
+            <if test="grade_id!=null">grade_id=#{grade_id},</if>
+            <if test="user_id!=null">user_id=#{user_id},</if>
+        </trim>
+        where reader_id=#{reader_id};
+    </update>
+
+    <select id="getUserByAccount" resultMap="user">
+        select * from `user` where user_account=#{account};
+    </select>
+
+    <select id="getAdminId" resultType="java.lang.String">
+        select admin_id from `admin` where user_id=#{user_id};
+    </select>
+
+    <select id="getCommonUserInfo" resultType="java.util.HashMap">
+        SELECT *
+        FROM `user` as u LEFT JOIN reader as r
+        ON u.user_id=r.user_id
+        WHERE u.user_id NOT IN (SELECT user_id FROM admin);
+    </select>
+
+    <select id="getCommonUserInfoByAccount" resultType="java.util.HashMap">
+        SELECT *
+        FROM `user` as u LEFT JOIN reader as r
+        ON u.user_id=r.user_id
+        WHERE u.user_account=#{account} AND u.user_id NOT IN (SELECT user_id FROM admin) ;
+    </select>
+
+    <select id="getAdminsInfo" resultType="java.util.HashMap">
+        SELECT *
+        FROM `user` as u LEFT JOIN reader as r
+                                   ON u.user_id=r.user_id
+        WHERE u.user_id IN (SELECT user_id FROM admin)
+    </select>
+
+    <select id="getAdminByAccount" resultType="java.util.HashMap">
+        SELECT *
+        FROM `user` as u LEFT JOIN reader as r
+                                   ON u.user_id=r.user_id
+        WHERE u.user_account=#{account} AND u.user_id IN (SELECT user_id FROM admin) ;
+    </select>
+</mapper>

@@ -1,0 +1,48 @@
+{
+    "list": [{
+            "id": 1,
+            "bookName": "华工历史",
+            "author": 123,
+            "press": "华工出版社",
+            "publishDate": "2019-11-1",
+            "borrowTime": "2021-4-1",
+            "returnTime": "",
+            "shouldReturnTime": "2021-5-2",
+            "username": "wzl",
+            "borrowID": "123",
+            "state": "尚未归还",
+            "link": "https://img1.baidu.com/it/u=2496571732,442429806&fm=26&fmt=auto&gp=0.jpg"
+
+        },
+
+        {
+            "id": 2,
+            "bookName": "华工毕业指南",
+            "author": 123,
+            "press": "华工出版社",
+            "publishDate": "2020-11-1",
+            "state": "超期",
+            "borrowTime": "2021-1-1",
+            "shouldReturnTime": "2021-2-1",
+            "username": "twh",
+            "borrowID": "121",
+            "returnTime": "",
+            "link": "https://lin-xin.gitee.io/images/post/notice.png"
+        },
+        {
+            "id": 3,
+            "bookName": "华工毕业指南",
+            "author": 123,
+            "press": "华工出版社",
+            "publishDate": "2020-11-1",
+            "state": "已归还",
+            "borrowTime": "2021-4-1",
+            "returnTime": "2021-5-2",
+            "username": "lkw",
+            "borrowID": "122",
+            "shouldReturnTime": "",
+            "link": "https://lin-xin.gitee.io/images/post/notice.png"
+        }
+    ],
+    "pageTotal": 3
+}

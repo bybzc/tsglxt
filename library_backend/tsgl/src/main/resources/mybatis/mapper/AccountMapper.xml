@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.by.tsgl.mapper.AccountMapper">
+
+    <resultMap id="user_account"  type="com.by.tsgl.bean.User">
+<!--        column数据库列名或标签别名   property需要映射到JAVABEAN的属性名称-->
+        <id column="user_account" property="account"></id>
+        <result column="user_pwd" property="password"></result>
+        <result column="user_name" property="username"></result>
+    </resultMap>
+    <resultMap id="admin_account"  type="com.by.tsgl.bean.Admin">
+        <id column="admin_account" property="account"></id>
+        <result column="admin_pwd" property="password"></result>
+        <result column="admin_name" property="username"></result>
+    </resultMap>
+
+    <select id="getAccount" resultMap="user_account">
+        select* from user where user_account=#{account} and user_pwd=#{password}
+    </select>
+    <select id="getAccount_admin" resultMap="admin_account">
+    <!--修复admin属性冗余的bug，修改检索方式-->
+        select * from admin LEFT OUTER JOIN user on admin.user_id=user.user_id
+        where  user.user_account=#{account};
+      <!--  select * from admin where admin_account=#{account} and admin_pwd=#{password}-->
+    </select>
+
+    <select id="isAccount" resultType="java.lang.Boolean">
+            SELECT COUNT(*) AS sum1
+            FROM user
+            WHERE user_account=#{account}
+    </select>
+
+    <select id="isAdmin" resultType="java.lang.Boolean">
+        select count(*) from admin,user
+        where admin.user_id=user.user_id and user.user_account=#{account};
+    </select>
+
+    <insert id="addAcc" parameterType="com.by.tsgl.bean.User" useGeneratedKeys="true" keyProperty="user_id">
+        <!--useGeneratedKeys="true" keyProperty="user_id" 配置自增-->
+        insert into user
+            (user_account,user_email,user_tel,user_pwd,user_name,user_sex,user_id_number)
+        values
+            (#{account},#{user_email,jdbcType=VARCHAR},#{user_tel, jdbcType=CHAR},#{password},#{username, jdbcType=VARCHAR},#{user_sex,jdbcType=TINYINT},#{user_id_number,jdbcType=CHAR})
+    </insert>
+
+    <select id="getUserId" resultType="java.lang.String">
+        select user_id from user
+        where user_account=#{account};
+    </select>
+
+    <update id="modifyUserInfo" parameterType="com.by.tsgl.bean.User">
+        UPDATE user
+        <set>
+            <if test="user_email!=null"> user_email=#{user_email,jdbcType=VARCHAR}, </if>
+            <if test="user_tel!=null">user_tel=#{user_tel,jdbcType=CHAR}, </if>
+            <if test="password!=null">user_pwd=#{password,jdbcType=VARCHAR}, </if>
+            <if test="username!=null">user_name=#{username,jdbcType=VARCHAR}, </if>
+            <if test="user_sex!=null">user_sex=#{user_sex,jdbcType=TINYINT}, </if>
+            <if test="user_id_number!=null">user_id_number=#{user_id_number,jdbcType=CHAR} </if>
+        </set>
+        where user_account=#{account};
+    </update>
+
+    <select id="isInfoNotFull" resultType="java.lang.Boolean">
+        select count(*)
+        from user
+        where user_account=#{account} and (user_email is null or user_tel is null or user_pwd is null or user_name is null or user_sex is null or user_id_number is null);
+    </select>
+
+    <select id="getUserInfo" resultMap="user_account">
+        SELECT * FROM library_system.user WHERE user_account=#{account};
+    </select>
+</mapper>

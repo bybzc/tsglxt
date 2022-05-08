@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.by.tsgl.mapper.TradeMapper">
+<!--    订单模块-->
+    <insert id="createOrder" parameterType="com.by.tsgl.bean.Deal" useGeneratedKeys="true" keyProperty="deal_id">
+        insert into deal
+            (deal_subject,deal_amount,deal_state,deal_time,pay_method,out_trade_no,our_collection_account,deal_trade_no,refund_id,remark,reader_id)
+        values
+               (#{subject},#{totalAmount},#{dealState},#{time},#{pay_method},#{outTradeNo},#{collectionAccount},#{tradeNo},null,null,#{reader_id});
+    </insert>
+
+    <update id="updateOrderState" parameterType="java.lang.String">
+        update deal
+        set deal_state=
+            <choose>
+                <when test="state==0">'待支付'</when>
+                <when test="state==1">'交易成功'</when>
+                <when test="state==-1">'已退款'</when>
+                <otherwise>'未知状态'</otherwise>
+            </choose>,
+            deal_trade_no=#{trade_no},
+            deal_time=#{date}
+        where out_trade_no=#{out_trade_no};
+    </update>
+
+
+
+<!--    退款模块-->
+    <insert id="createRefund" parameterType="com.by.tsgl.bean.Refund" keyProperty="refund_id" useGeneratedKeys="true">
+        insert into refund(refund_subject,refund_amount,refund_state,refund_time,refund_method,deal_tradeno,remark)
+        values (#{subject},#{amount},#{state},#{time},#{method},#{trade_no},#{remark});
+    </insert>
+    <update id="updateOrderRefund">
+        update deal
+        set refund_id=#{refund_id}
+        where out_trade_no=#{out_trade_no}
+    </update>
+
+<!--    罚款模块-->
+<!--创建罚单-->
+    <insert id="createFine" parameterType="com.by.tsgl.bean.Fine" keyProperty="fine_id" useGeneratedKeys="true">
+        insert into fine(fine_amount,fine_time,out_trade_no)
+        values (#{fine_amount},#{fine_time},#{fine_out_trade_no});
+    </insert>
+
+<!--获取罚单对应的借阅记录-->
+    <select id="getFineBorrow" resultType="com.by.tsgl.bean.Borrow" >
+        SELECT*
+        FROM borrow
+        WHERE reader_id=#{reader_id} and borrow_state='图书逾期' or borrow_state='图书损坏' or borrow_state='图书丢失';
+    </select>
+<!--获取需要的借阅记录-->
+    <select id="getFineRuleByState" resultType="com.by.tsgl.bean.FineRule">
+        SELECT*
+        FROM fine_rule
+        WHERE frule_name=#{subject};
+    </select>
+<!--更新借阅记录的归还时间和状态-->
+    <update id="updateBorrowState">
+        update borrow
+        set borrow_state=#{state},
+            return_time=#{time}
+        where borrow_id=#{borrow_id};
+    </update>
+<!--更新图书归还图书-->
+    <update id="updateBookState">
+        update book
+        set b_state=#{state}
+        where b_id=#{book_id};
+    </update>
+</mapper>

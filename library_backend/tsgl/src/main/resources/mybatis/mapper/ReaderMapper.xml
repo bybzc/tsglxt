@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.by.tsgl.mapper.ReaderMapper" >
+
+    <insert id="registerReader" useGeneratedKeys="true" >
+        insert into reader(deposit_num,borrowing_num,reader_state,grade_id,user_id)
+        values(0,0,"正常",1,#{user_id});
+    </insert>
+
+    <select id="getAllReaderGrade" resultType="com.by.tsgl.bean.ReaderGrade">
+        SELECT * FROM library_system.reader_grade;
+    </select>
+
+    <select id="getReaderGradeById" resultType="com.by.tsgl.bean.ReaderGrade">
+        SELECT * FROM library_system.reader_grade where grade_id=#{grade_id};
+    </select>
+
+    <update id="updateReaderGradeById">
+        UPDATE reader_grade
+        <set>
+            <if test="grade_name!=null"> grade_name=#{grade_name,jdbcType=VARCHAR}, </if>
+            <if test="borrow_day!=null">borrow_day=#{borrow_day}, </if>
+            <if test="borrow_booknum!=null">borrow_booknum=#{borrow_booknum}, </if>
+            <if test="renew_num!=null">renew_num=#{renew_num}, </if>
+            <if test="renew_day!=null">renew_day=#{renew_day}</if>
+        </set>
+        where grade_id=#{grade_id};
+    </update>
+
+    <select id="getBorrowingNumByAccount" resultType="int">
+        SELECT borrowing_num  FROM library_system.reader_info
+        where user_account=#{account};
+    </select>
+
+    <select id="getAllowBorrowNumByAccount" resultType="int">
+        SELECT borrow_booknum  FROM library_system.reader_info
+        where user_account=#{account};
+    </select>
+
+    <update id="reduceBorrowingNum">
+        UPDATE reader
+        set borrowing_num=borrowing_num-1
+        where reader_id=#{reader_id};
+    </update>
+
+    <update id="updateReader">
+        update reader
+        <trim prefix="set" suffixOverrides=",">
+            <if test="deposit_num!=null">deposit_num=#{deposit_num},</if>
+            <if test="borrowing_num!=null">borrowing_num=#{borrowing_num},</if>
+            <if test="reader_state!=null">reader_state=#{reader_state},</if>
+            <if test="grade_id!=null">grade_id=#{grade_id},</if>
+            <if test="user_id!=null">user_id=#{user_id},</if>
+        </trim>
+        where reader_id=#{reader_id};
+    </update>
+
+    <select id="getReaderId" resultType="java.lang.String">
+        select reader_id
+        from reader
+        where user_id=#{user_id}
+    </select>
+
+    <select id="getReader" resultType="com.by.tsgl.bean.Reader">
+        SELECT * FROM library_system.reader where user_id=#{user_id};
+    </select>
+
+    <select id="getReaderByReaderId" resultType="com.by.tsgl.bean.Reader">
+        select * from reader where reader_id=#{reader_id};
+    </select>
+</mapper>

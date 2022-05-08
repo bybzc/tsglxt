@@ -1,0 +1,37 @@
+<!Doctype>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>测试</title>
+</head>
+<body>
+<form name=alipayment action=/alipay/pay method=post target="_blank">
+    <div id="body1" class="show" name="divcontent" >
+        <dl class="content">
+            <dt>商户订单号 ：</dt>
+            <dd>
+                <input id="WIDout_trade_no" name="outTradeNo" />
+            </dd>
+            <hr class="one_line">
+            <dt>订单名称 ：</dt>
+            <dd>
+                <input id="WIDsubject" name="subject" />
+            </dd>
+            <hr class="one_line">
+            <dt>付款金额 ：</dt>
+            <dd>
+                <input id="WIDtotal_amount" name="totalAmount" />
+            </dd>
+            <hr class="one_line">
+            <dt></dt>
+            <dd id="btn-dd">
+						<span class="new-btn-login-sp">
+							<button class="new-btn-login" type="submit"
+                                    style="text-align: center;">支付</button>
+						</span> <span class="note-help"></span>
+            </dd>
+        </dl>
+    </div>
+</form>
+</body>
+</html>

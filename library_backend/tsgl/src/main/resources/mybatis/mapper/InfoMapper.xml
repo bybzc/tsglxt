@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.by.tsgl.mapper.InfoMapper">
+<!--    添加公告-->
+    <insert id="addAnnouncement" useGeneratedKeys="true" keyProperty="announcement_id">
+        insert into announcement(announcement_title,announcement_content,announcement_date,announcement_publisher_id)
+        values (#{announcement_title},#{announcement_content},#{announcement_date},#{announcement_publisher_id});
+    </insert>
+
+<!--    删除公告-->
+    <delete id="delAnnouncement" parameterType="java.lang.String">
+        delete from announcement where announcement_id=#{announcement};
+    </delete>
+
+<!--    修改公告-->
+    <update id="modifyAnnouncement" parameterType="com.by.tsgl.bean.Announcement">
+        update announcement
+        <trim prefix="set" suffixOverrides=",">
+            <if test="announcement_title!=null">announcement_title=#{announcement_title},</if>
+            <if test="announcement_content!=null">announcement_content=#{announcement_content},</if>
+            <if test="announcement_date!=null"> announcement_date=#{announcement_date},</if>
+            <if test="announcement_publisher_id!=null">announcement_publisher_id=#{announcement_publisher_id},</if>
+        </trim>
+        where announcement_id=#{announcement_id};
+    </update>
+
+<!--   获取公告-->
+<!--获取最新的公告-->
+    <select id="getLatestAnnouncement" resultType="com.by.tsgl.bean.Announcement">
+       SELECT *
+       FROM announcement
+       ORDER BY announcement_date DESC LIMIT #{size};
+   </select>
+<!--获取某个管理员发布的公告-->
+    <select id="getAdminAnnouncement" resultType="com.by.tsgl.bean.Announcement">
+        select* from announcement
+        where announcement_publisher_id=#{admin_id};
+    </select>
+<!--根据id获取公告-->
+    <select id="getAnnouncementById" resultType="com.by.tsgl.bean.Announcement">
+        select *from announcement
+        where announcement_id=#{announcement_id};
+    </select>
+
+<!--图书借阅排行榜-->
+    <select id="getRankList" resultType="java.util.HashMap">
+        SELECT book_id,count(book_id) as num
+        FROM borrow
+        GROUP BY book_id
+        LIMIT 10;
+    </select>
+
+<!--    留言模块-->
+    <resultMap id="message" type="com.by.tsgl.bean.Message">
+        <id property="id" column="msg_id"></id>
+        <result property="title" column="msg_title"></result>
+        <result property="content" column="msg_content"></result>
+        <result property="date" column="msg_date"></result>
+        <result property="state" column="msg_state"></result>
+        <result property="father_id" column="user_id"></result>
+    </resultMap>
+    <resultMap id="reply" type="com.by.tsgl.bean.Message">
+        <id property="id" column="reply_id"></id>
+        <result property="title" column="reply_title"></result>
+        <result property="content" column="reply_content"></result>
+        <result property="date" column="reply_date"></result>
+        <result property="state" column="reply_state"></result>
+        <result property="father_id" column="msg_id"></result>
+    </resultMap>
+    <insert id="leaveMsg" useGeneratedKeys="true" keyColumn="msg_id">
+        insert into msg(msg_title,msg_content,msg_date,msg_state,user_id)
+        values (#{title},#{content},#{date},#{state},#{father_id});
+    </insert>
+    <insert id="replyMsg" useGeneratedKeys="true" keyColumn="reply_id">
+        insert into msg_reply(reply_title,reply_content,reply_date,reply_state,msg_id)
+        values (#{title},#{content},#{date},#{state},#{father_id});
+    </insert>
+    <select id="getMsgsByMsgId" resultMap="message">
+        select * from msg
+        where msg_id=#{msg_id}
+    </select>
+    <update id="updateMsgState">
+        update msg
+        set msg_state='已读'
+        where msg_id=#{msg_id};
+    </update>
+    <select id="getReplyByUserID" resultMap="reply">
+        SELECT *
+        FROM msg NATURAL JOIN msg_reply
+        WHERE user_id=#{user_id}
+        order by reply_state desc,reply_date desc;
+    </select>
+    <select id="getAllMsgs" resultMap="message">
+        select * from msg
+        order by msg_state desc ,msg_date desc;
+    </select>
+
+<!--    -->
+    <select id="getReaderByAccount" resultType="com.by.tsgl.bean.Reader">
+        SELECT *
+        FROM  reader NATURAL JOIN `user`
+        WHERE user_account=#{account};
+    </select>
+
+    <resultMap id="deal" type="com.by.tsgl.bean.Deal">
+        <id property="deal_id" column="deal_id"></id>
+        <result property="reader_id" column="reader_id"></result>
+        <result property="outTradeNo" column="out_trade_no"></result>
+        <result property="tradeNo" column="deal_trade_no"></result>
+        <result property="time" column="deal_time"></result>
+        <result property="totalAmount" column="deal_amount"></result>
+        <result property="dealState" column="deal_state"></result>
+        <result property="collectionAccount" column="out_collection_account"></result>
+        <result property="subject" column="deal_subject"></result>
+    </resultMap>
+
+    <resultMap id="refund" type="com.by.tsgl.bean.Refund">
+        <id property="refund_id" column="refund_id"></id>
+        <result property="subject" column="refund_subject"></result>
+        <result property="amount" column="refund_amount"></result>
+        <result property="state" column="refund_state"></result>
+        <result property="time" column="refund_time"></result>
+        <result property="method" column="refund_method"></result>
+        <result property="trade_no" column="deal_tradeno"></result>
+    </resultMap>
+
+    <select id="getDealById" parameterType="java.lang.String" resultMap="deal" >
+        select * from deal where deal_id=#{deal_id};
+    </select>
+    <select id="getDealByOutTradeNo" resultMap="deal">
+        select * from deal where  out_trade_no=#{out_trade_no};
+    </select>
+
+    <select id="getRefund" parameterType="java.lang.String" resultMap="refund">
+        select * from refund where deal_tradeno=#{trade_no};
+    </select>
+
+    <select id="getFine" resultType="com.by.tsgl.bean.Fine">
+        SELECT *
+        FROM fine NATURAL join borrow NATURAL join fine_rule
+        WHERE reader_id=#{reader_id};
+    </select>
+
+
+    <resultMap id="book" type="com.by.tsgl.bean.Book">
+        <id property="book_id" column="b_id"></id>
+        <result property="nameOfBook" column="b_name"></result>
+        <result property="author" column="b_author"></result>
+        <result property="press" column="b_press"></result>
+        <result property="isbn" column="b_isbn"></result>
+        <result property="language" column="language"></result>
+        <result property="abstractMsg" column="abstract"></result>
+        <result property="keyword" column="keyword"></result>
+        <result property="price" column="b_price"></result>
+        <result property="call_number" column="call_number"></result>
+        <result property="position" column="b_position"></result>
+        <result property="state" column="b_state"></result>
+        <result property="situation" column="b_situation"></result>
+        <result property="library_id" column="library_id"></result>
+        <result property="image" column="b_image"></result>
+    </resultMap>
+    <select id="getBorrowedBooks" resultType="java.util.HashMap">
+        select b_id as book_id,b_name as nameOfBook,b_author as author,b_press as press,b_isbn as isbn,`language`,abstract as abstractMsg,
+               keyword,b_price as price,call_number,b_position as position,b_image as image,library_id ,borrow_time,should_return,return_time,borrow_state
+        from (select *
+            from book
+            where book.b_id in
+            (select book_id from borrow
+            where reader_id=#{reader_id}))as tp
+            join borrow
+        where borrow.book_id=tp.b_id AND borrow.reader_id=#{reader_id};
+    </select>
+
+    <select id="getAnnouncementAdminInfo" resultType="map">
+        select admin_id,admin.user_id,user_name
+        from admin left outer join user on admin.user_id=user.user_id
+        where admin.user_id in
+              (select announcement_publisher_id from announcement);
+    </select>
+
+    <select id="getBookNum" resultType="java.lang.Integer">
+        select count(*) from book;
+    </select>
+
+    <select id="getAccessNum" resultType="java.lang.Integer">
+        select count(*) from borrow;
+    </select>
+    <select id="getBookByState" resultMap="book">
+        select * from book
+        <trim suffixOverrides="and" prefix="where" >
+        <if  test="state!=null"> b_state=#{state}</if>
+        <if test="b_situation!=null">b_situation=#{b_situation}</if>
+        </trim>;
+    </select>
+
+    <select id="getAllBorrowedBooks" resultType="java.util.HashMap">
+        SELECT book_id,b_name,b_press,b_author,b_situation,b_image,reader_id,borrow_time,should_return,borrow_state,renew_num,user_name,user_account
+        FROM book JOIN borrow NATURAL JOIN reader NATURAL JOIN `user`
+            ON book_id=b_id AND b_state='借出' AND (borrow_state='借出' OR borrow_state='图书逾期');
+    </select>
+</mapper>

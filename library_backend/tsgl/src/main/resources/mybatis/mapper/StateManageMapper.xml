@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.by.tsgl.mapper.DataStateMapper">
+    <select id="checkBadBorrowState" resultType="java.util.HashMap">
+        SELECT reader_id,borrow_id,should_return,t.renew_num AS used_renew_num,
+               book_id,user_id,reader_state,reader_grade.renew_num AS surplus_renew_num,renew_day
+        FROM
+            ( SELECT* FROM(
+                              SELECT *
+                              FROM	borrow NATURAL JOIN reader
+                              WHERE borrow_state='借出'
+                          ) AS p)AS t JOIN reader_grade
+        WHERE t.grade_id=reader_grade.grade_id AND  NOW()>should_return;
+    </select>
+
+
+    <resultMap id="deal" type="com.by.tsgl.bean.Deal">
+        <id property="deal_id" column="deal_id"></id>
+        <result property="reader_id" column="reader_id"></result>
+        <result property="outTradeNo" column="out_trade_no"></result>
+        <result property="tradeNo" column="deal_trade_no"></result>
+        <result property="time" column="deal_time"></result>
+        <result property="totalAmount" column="deal_amount"></result>
+        <result property="dealState" column="deal_state"></result>
+        <result property="collectionAccount" column="out_collection_account"></result>
+        <result property="subject" column="deal_subject"></result>
+    </resultMap>
+    <select id="checkBadDealState" resultMap="deal">
+        SELECT *
+        FROM deal
+        WHERE deal_state='待支付' AND TIMESTAMPDIFF(MINUTE  ,deal_time,NOW())>15;
+    </select>
+
+    <delete id="deleteBadDeal">
+        delete from deal where deal_id=#{deal_id};
+    </delete>
+
+    <select id="checkBadReserveState" resultType="java.util.HashMap">
+        SELECT borrow_id,b_id
+        FROM borrow JOIN book
+        WHERE book_id =b_id AND b_state='预定' AND borrow_state='预定' AND TIMESTAMPDIFF(MINUTE,borrow_time,NOW())>0
+    </select>
+
+    <delete id="deleteBadBorrow">
+        delete from borrow where borrow_id=#{borrow_id};
+    </delete>
+
+    <update id="updateBook">
+        update book
+        set b_state='在馆'
+        where b_id=#{book_id};
+    </update>
+
+    <insert id="insertNotify" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="id">
+        insert into notify(title,content,user_id,`date`,`state`) values
+        <foreach collection="list" item="model"  separator=",">
+        (#{model.title},#{model.content},#{model.father_id},#{model.date},#{model.state})
+        </foreach>
+    </insert>
+
+    <resultMap id="message" type="com.by.tsgl.bean.Message">
+        <id property="id" column="id"></id>
+        <result property="title" column="title"></result>
+        <result property="content" column="content"></result>
+        <result property="date" column="date"></result>
+        <result property="state" column="state"></result>
+        <result property="father_id" column="user_id"></result>
+    </resultMap>
+    <select id="getNotify" parameterType="java.lang.String" resultMap="message">
+        select * from notify NATURAL JOIN `user`
+        WHERE user_account=#{account}
+        <if test="state!=null">AND `state`=#{state}</if>
+        ORDER BY state DESC, date DESC;
+    </select>
+
+    <update id="updateNotify">
+        update notify
+        <trim suffixOverrides="," prefix="set" >
+            <if test="title!=null">title=#{title},</if>
+            <if test="content!=null">content=#{content},</if>
+            <if test="father_id!=null">user_id=#{father_id},</if>
+            <if test="date!=null">`date`=#{date},</if>
+            <if test="state!=null">`state`=#{state},</if>
+        </trim>
+        where id=#{id};
+</update>
+</mapper>

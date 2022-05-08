@@ -1,0 +1,26 @@
+{
+    "list": [{
+            "id": 1,
+            "bookName": "华工历史",
+            "author": 123,
+            "press": "华工出版社",
+            "publishDate": "2019-11-1",
+            "state": "有在馆图书",
+            "num":"4/16",
+            "link": "https://img1.baidu.com/it/u=2496571732,442429806&fm=26&fmt=auto&gp=0.jpg"
+            
+        },
+     
+        {
+            "id": 2,
+            "bookName": "华工毕业指南",
+            "author": 123,
+            "press": "华工出版社",
+            "publishDate": "2020-11-1",
+            "state": "无在馆图书",
+            "num":"0/10",
+            "link": "https://lin-xin.gitee.io/images/post/notice.png"
+        }
+    ],
+    "resultNum": 2
+}
